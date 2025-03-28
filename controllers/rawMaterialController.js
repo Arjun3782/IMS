@@ -1,0 +1,64 @@
+const RawMaterial = require("../model/rawMaterialModel");
+
+//post raw material
+const addRawMaterial = async (req, res) => {
+  try {
+    const rawMaterial = await RawMaterial.create(req.body);
+    res.status(201).json({
+      success: true,
+      message: "Raw Material Successfully Added",
+      r_data: rawMaterial,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+//get raw material
+const getRawMaterial = async (req, res) => {
+  try {
+    const rawMaterial = await RawMaterial.find();
+    res.status(200).json({ success: true, r_data: rawMaterial });
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+//update raw material
+const updateRawMaterial = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const rawMaterial = await RawMaterial.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
+    res.status(200).json({
+      success: true,
+      message: "Raw Material Successfully Updated",
+      r_data: rawMaterial,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+//delete raw material
+const deleteRawMaterial = async (req, res) =>{
+  try {
+    const id = req.params.id;
+    const rawMaterial = await RawMaterial.findByIdAndDelete(id);
+    res.status(200).json({
+      success: true,
+      message: "Raw Material Successfully Deleted",
+      r_data: rawMaterial,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+}
+
+module.exports = {
+  addRawMaterial,
+  getRawMaterial,
+  updateRawMaterial,
+  deleteRawMaterial
+};
