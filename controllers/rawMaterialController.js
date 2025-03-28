@@ -1,4 +1,4 @@
-const RawMaterial = require("../model/rawMaterialModel");
+const RawMaterial = require("../Model/rawMaterialModel");
 
 //post raw material
 const addRawMaterial = async (req, res) => {

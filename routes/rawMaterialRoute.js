@@ -1,5 +1,5 @@
 const express = require('express'); 
-const { addRawMaterial, getRawMaterial, updateRawMaterial, deleteRawMaterial } = require('../controllers/rawMaterialController');
+const { addRawMaterial, getRawMaterial, updateRawMaterial, deleteRawMaterial } = require('../Controllers/rawMaterialController');
 const router = express.Router();
 router.post('/addRawMaterial', addRawMaterial);
 router.get('/getRawMaterial', getRawMaterial);
