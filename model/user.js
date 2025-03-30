@@ -19,14 +19,15 @@ const UserSchema = new Schema({
     type: String,
     required: true
   },
+  // Add company ID reference
+  companyId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Company'
+  },
   role: {
     type: String,
     enum: ['admin', 'manager', 'staff'],
     default: 'staff'
-  },
-  department: {
-    type: String,
-    required: false
   },
   phone: {
     type: String,

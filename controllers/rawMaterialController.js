@@ -3,8 +3,21 @@ const RawMaterial = require("../Model/rawMaterialModel");
 //post raw material
 const addRawMaterial = async (req, res) => {
   try {
-    // Add company ID from middleware
-    req.body.companyId = req.companyId;
+    // Check if companyId is already in the request body
+    if (!req.body.companyId && req.companyId) {
+      // Add company ID from middleware if not already present
+      req.body.companyId = req.companyId;
+    }
+    
+    // Additional validation to ensure companyId exists
+    if (!req.body.companyId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Company ID is required but not provided" 
+      });
+    }
+    
+    console.log("Creating raw material with data:", req.body);
     
     const rawMaterial = await RawMaterial.create(req.body);
     res.status(201).json({
@@ -13,6 +26,7 @@ const addRawMaterial = async (req, res) => {
       r_data: rawMaterial,
     });
   } catch (error) {
+    console.error("Error adding raw material:", error);
     return res.status(400).json({ success: false, error: error.message });
   }
 };

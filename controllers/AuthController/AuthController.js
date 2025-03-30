@@ -1,10 +1,11 @@
-const UserModel = require("../../model/user");
+const UserModel = require("../../Model/user");
+const CompanyModel = require("../../Model/companyModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
 const signup = async (req, res) => {
   try {
-    const { name, email, password, company_name, role, department, phone } = req.body;
+    const { name, email, password, company_name, role, phone } = req.body;
     const user = await UserModel.findOne({ email });
     if (user) {
       return res.status(409).json({
@@ -12,21 +13,54 @@ const signup = async (req, res) => {
         success: false,
       });
     }
+
+    // Check if company exists, if not create it
+    let company = await CompanyModel.findOne({ name: company_name });
+    
+    if (!company) {
+      // Create new company
+      company = new CompanyModel({
+        name: company_name,
+        email: email,
+        phone: phone
+      });
+      
+      company = await company.save();
+      console.log(`Created new company: ${company_name} with ID: ${company._id}`);
+    }
+
+    // Create user with company ID reference (removed department)
     const userModel = new UserModel({
       name,
       email,
       password,
       company_name,
+      companyId: company._id,
       role: role || 'staff',
-      department,
       phone
     });
+    
     userModel.password = await bcrypt.hash(password, 10);
     await userModel.save();
-    return res
-      .status(201)
-      .json({ message: "User created successfully", success: true });
+    
+    // Generate token for immediate login
+    const token = generateAccessToken(userModel);
+    
+    return res.status(201).json({ 
+      message: "User created successfully", 
+      success: true,
+      accessToken: token,
+      user: {
+        id: userModel._id,
+        name: userModel.name,
+        email: userModel.email,
+        company_name: userModel.company_name,
+        companyId: company._id.toString(),
+        role: userModel.role
+      }
+    });
   } catch (err) {
+    console.error("Signup error:", err);
     return res
       .status(500)
       .json({ message: "Internal server error", success: false });
@@ -40,7 +74,8 @@ const generateAccessToken = (user) => {
       id: user._id,
       email: user.email,
       role: user.role,
-      company_name: user.company_name
+      company_name: user.company_name,
+      companyId: user.companyId.toString() // Ensure companyId is a string
     },
     process.env.JWT_SECRET,
     { expiresIn: "15m" } // Shorter expiration for access tokens
@@ -77,6 +112,25 @@ const login = async (req, res) => {
       });
     }
 
+    // Check if user has companyId, if not, find or create company
+    if (!user.companyId) {
+      let company = await CompanyModel.findOne({ name: user.company_name });
+      
+      if (!company) {
+        // Create company if it doesn't exist
+        company = new CompanyModel({
+          name: user.company_name,
+          email: user.email,
+          phone: user.phone
+        });
+        company = await company.save();
+      }
+      
+      // Update user with company ID
+      user.companyId = company._id;
+      await user.save();
+    }
+
     // Generate tokens
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
@@ -93,16 +147,23 @@ const login = async (req, res) => {
       sameSite: 'strict'
     });
 
+    // In the login function, update the response
     return res.status(200).json({
       message: "Login Success",
       success: true,
       accessToken,
-      email,
-      name: user.name,
-      role: user.role,
-      company_name: user.company_name
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        company_name: user.company_name,
+        companyId: user.companyId.toString(),
+        phone: user.phone
+      }
     });
   } catch (err) {
+    console.error("Login error:", err);
     return res
       .status(500)
       .json({ message: "Internal server error", success: false });
