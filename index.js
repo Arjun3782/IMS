@@ -11,7 +11,8 @@ const rawMaterialRoute = require('./routes/rawMaterialRoute');
 const authRoutes = require('./routes/AuthRoutes/AuthRouter');
 const productRoute = require('./routes/productRoute');
 const productionRoute = require('./routes/productionRoute');
-// Fix the path if needed - ensure correct capitalization
+// Remove this line since we'll include it in authRoutes
+// const refreshTokenRoute = require('./routes/auth/refreshToken');
 const companyRoute = require('./routes/companyRoute');
 
 // Connect to databases
@@ -20,7 +21,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'],  // Allow both origins
+  origin: ['http://localhost:3000', 'http://localhost:5173'],
   credentials: true // This allows cookies to be sent with requests
 }));
 app.use(express.json());
@@ -32,6 +33,9 @@ app.use('/api/rawMaterial', rawMaterialRoute);
 app.use('/api/product', productRoute);
 app.use('/api/production', productionRoute);
 app.use('/api/company', companyRoute);
+
+// Remove this line since we're already using authRoutes for /api/auth
+// app.use('/api/auth', refreshTokenRoute);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -34,10 +34,25 @@ const addRawMaterial = async (req, res) => {
 //get raw material
 const getRawMaterial = async (req, res) => {
   try {
+    // Check if companyId is available
+    if (!req.companyId) {
+      console.error('Company ID not found in request');
+      return res.status(400).json({ 
+        success: false, 
+        error: "Company ID is required but not available" 
+      });
+    }
+    
+    console.log('Fetching raw materials for company:', req.companyId);
+    
     // Filter by company ID
     const rawMaterial = await RawMaterial.find({ companyId: req.companyId });
+    
+    console.log(`Found ${rawMaterial.length} raw materials`);
+    
     res.status(200).json({ success: true, r_data: rawMaterial });
   } catch (error) {
+    console.error("Error fetching raw materials:", error);
     return res.status(400).json({ success: false, error: error.message });
   }
 };

@@ -1,14 +1,17 @@
-const express = require('express'); 
-const { addRawMaterial, getRawMaterial, updateRawMaterial, deleteRawMaterial } = require('../Controllers/rawMaterialController');
-const ensureAuthenticated = require('../Middlewares/AuthMiddlewares/Auth');
-const companyFilter = require('../Middlewares/companyFilter');
-
+const express = require('express');
 const router = express.Router();
+const {
+  addRawMaterial,
+  getRawMaterial,
+  updateRawMaterial,
+  deleteRawMaterial
+} = require('../Controllers/rawMaterialController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
-// Apply authentication and company filter middleware to all routes
-router.use(ensureAuthenticated);
-router.use(companyFilter);
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
+// Raw material routes
 router.post('/addRawMaterial', addRawMaterial);
 router.get('/getRawMaterial', getRawMaterial);
 router.put('/updateRawMaterial/:id', updateRawMaterial);
