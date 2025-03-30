@@ -19,6 +19,37 @@ const addRawMaterial = async (req, res) => {
     
     console.log("Creating raw material with data:", req.body);
     
+    // Check if a composite key would make this entry unique
+    // For example, if you're adding materials with different dates or product IDs
+    // You might want to check if a material with the same identifiers already exists
+    
+    // Create a unique identifier based on multiple fields
+    const uniqueIdentifier = {
+      companyId: req.body.companyId,
+      s_id: req.body.s_id,
+      p_id: req.body.p_id,
+      date: req.body.date
+    };
+    
+    // Check if a material with these exact properties already exists
+    const existingMaterial = await RawMaterial.findOne(uniqueIdentifier);
+    
+    if (existingMaterial) {
+      // If it exists, update it instead of creating a new one
+      const updatedMaterial = await RawMaterial.findByIdAndUpdate(
+        existingMaterial._id,
+        req.body,
+        { new: true }
+      );
+      
+      return res.status(200).json({
+        success: true,
+        message: "Raw Material Successfully Updated",
+        r_data: updatedMaterial,
+      });
+    }
+    
+    // If no duplicate exists, create a new material
     const rawMaterial = await RawMaterial.create(req.body);
     res.status(201).json({
       success: true,

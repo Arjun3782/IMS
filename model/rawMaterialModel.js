@@ -1,16 +1,9 @@
-const { Schema, model } = require("mongoose");
 
-// raw material schema
-const rawMaterialSchema = new Schema({
-  // Add company field
-  companyId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Company',
-    required: true
-  },
+const mongoose = require('mongoose');
+
+const rawMaterialSchema = new mongoose.Schema({
   s_id: {
-    //seller id
-    type: Number,
+    type: String,
     required: true,
   },
   s_name: {
@@ -18,7 +11,7 @@ const rawMaterialSchema = new Schema({
     required: true,
   },
   ph_no: {
-    type: Number,
+    type: String,
     required: true,
   },
   address: {
@@ -26,8 +19,7 @@ const rawMaterialSchema = new Schema({
     required: true,
   },
   p_id: {
-    // product id
-    type: Number,
+    type: String,
     required: true,
   },
   p_name: {
@@ -49,11 +41,27 @@ const rawMaterialSchema = new Schema({
   date: {
     type: Date,
     required: true,
-  }
+  },
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+    required: true,
+  },
 });
 
-// Create compound index for unique product IDs within a company
-rawMaterialSchema.index({ p_id: 1, companyId: 1 }, { unique: true });
+// Drop existing problematic indexes
+// This will remove the p_id_1 index
+rawMaterialSchema.index({ p_id: 1 }, { unique: false });
 
-const RawMaterialModel = model("RawMaterial", rawMaterialSchema);
-module.exports = RawMaterialModel;
+// This will remove the p_id_1_companyId_1 index
+rawMaterialSchema.index({ p_id: 1, companyId: 1 }, { unique: false });
+
+// Create a new compound index that includes all the fields we need for uniqueness
+rawMaterialSchema.index(
+  { companyId: 1, p_id: 1, s_id: 1, date: 1 },
+  { unique: true }
+);
+
+const RawMaterial = mongoose.model('RawMaterial', rawMaterialSchema);
+
+module.exports = RawMaterial;
