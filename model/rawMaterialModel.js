@@ -2,6 +2,12 @@ const { Schema, model } = require("mongoose");
 
 // raw material schema
 const rawMaterialSchema = new Schema({
+  // Add company field
+  companyId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Company',
+    required: true
+  },
   s_id: {
     //seller id
     type: Number,
@@ -45,6 +51,9 @@ const rawMaterialSchema = new Schema({
     required: true,
   }
 });
+
+// Create compound index for unique product IDs within a company
+rawMaterialSchema.index({ p_id: 1, companyId: 1 }, { unique: true });
 
 const RawMaterialModel = model("RawMaterial", rawMaterialSchema);
 module.exports = RawMaterialModel;

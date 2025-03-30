@@ -5,12 +5,19 @@ const addProduct = async (req, res) => {
   try {
     const { productId, productName, rawMaterialUsage } = req.body;
     
-    // Check if product with same ID already exists
-    const existingProduct = await ProductModel.findOne({ productId });
+    // Add company ID from middleware
+    const companyId = req.companyId;
+    
+    // Check if product with same ID already exists in this company
+    const existingProduct = await ProductModel.findOne({ 
+      productId, 
+      companyId 
+    });
+    
     if (existingProduct) {
       return res.status(400).json({
         success: false,
-        message: "Product with this ID already exists"
+        message: "Product with this ID already exists in your company"
       });
     }
     
@@ -18,6 +25,7 @@ const addProduct = async (req, res) => {
     const newProduct = new ProductModel({
       productId,
       productName,
+      companyId,
       rawMaterialUsage
     });
     
@@ -37,7 +45,8 @@ const addProduct = async (req, res) => {
 // Get all products
 const getProducts = async (req, res) => {
   try {
-    const products = await ProductModel.find();
+    // Filter by company ID
+    const products = await ProductModel.find({ companyId: req.companyId });
     res.status(200).json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -55,19 +64,30 @@ const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { productId, productName, rawMaterialUsage } = req.body;
     
-    // Check if product exists
-    const product = await ProductModel.findById(id);
+    // Check if product exists and belongs to user's company
+    const product = await ProductModel.findOne({ 
+      _id: id, 
+      companyId: req.companyId 
+    });
+    
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: "Product not found"
+        message: "Product not found or not authorized"
       });
     }
+    
+    // Don't allow changing the company ID
+    const updateData = {
+      productId,
+      productName,
+      rawMaterialUsage
+    };
     
     // Update product
     const updatedProduct = await ProductModel.findByIdAndUpdate(
       id,
-      { productId, productName, rawMaterialUsage },
+      updateData,
       { new: true }
     );
     
@@ -87,12 +107,16 @@ const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Check if product exists
-    const product = await ProductModel.findById(id);
+    // Check if product exists and belongs to user's company
+    const product = await ProductModel.findOne({ 
+      _id: id, 
+      companyId: req.companyId 
+    });
+    
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: "Product not found"
+        message: "Product not found or not authorized"
       });
     }
     

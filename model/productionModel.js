@@ -2,6 +2,12 @@ const { Schema, model } = require("mongoose");
 
 // Production schema
 const productionSchema = new Schema({
+  // Add company field
+  companyId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Company',
+    required: true
+  },
   productId: {
     type: Schema.Types.ObjectId,
     ref: 'Product',
