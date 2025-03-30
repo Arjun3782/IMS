@@ -1,106 +1,110 @@
-const ProductionModel = require("../Model/productionModel");
-const RawMaterialModel = require("../Model/rawMaterialModel");
-const ProductModel = require("../Model/productModel");
+const Production = require("../Model/productionModel");
+const RawMaterial = require("../Model/rawMaterialModel");
 
-// Add a new production
+// Add production
+// In the addProduction and updateProduction functions, make sure to handle the case where endDate is not provided
+
+// For example, in the addProduction function:
 const addProduction = async (req, res) => {
   try {
-    const { productId, quantity, date, status } = req.body;
-    const companyId = req.companyId;
+    // Check if companyId is already in the request body
+    if (!req.body.companyId && req.companyId) {
+      // Add company ID from middleware if not already present
+      req.body.companyId = req.companyId;
+    }
     
-    // Check if product exists and belongs to user's company
-    const product = await ProductModel.findOne({ 
-      _id: productId, 
-      companyId 
-    });
-    
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found or not authorized"
+    // Additional validation to ensure companyId exists
+    if (!req.body.companyId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Company ID is required but not provided" 
       });
     }
     
-    // Check if enough raw materials are available
-    const rawMaterialUsage = product.rawMaterialUsage;
-    const materialsToUpdate = [];
+    console.log("Creating production with data:", req.body);
     
-    for (const [materialId, requiredAmount] of Object.entries(rawMaterialUsage)) {
-      const totalRequired = requiredAmount * quantity;
-      
-      // Make sure to check materials from the same company
-      const material = await RawMaterialModel.findOne({ 
-        _id: materialId,
-        companyId
-      });
-      
-      if (!material || material.quantity < totalRequired) {
-        return res.status(400).json({
-          success: false,
-          message: `Not enough ${material ? material.p_name : 'material'} available.`
+    // Check if materials exist and have sufficient quantity
+    if (req.body.materials && req.body.materials.length > 0) {
+      for (const material of req.body.materials) {
+        const rawMaterial = await RawMaterial.findOne({
+          _id: material.materialId,
+          companyId: req.body.companyId
         });
+        
+        if (!rawMaterial) {
+          return res.status(404).json({
+            success: false,
+            error: `Raw material with ID ${material.materialId} not found`
+          });
+        }
+        
+        // Check if there's enough quantity
+        if (rawMaterial.quantity < material.quantityUsed) {
+          return res.status(400).json({
+            success: false,
+            error: `Insufficient quantity for ${rawMaterial.p_name}. Available: ${rawMaterial.quantity}, Required: ${material.quantityUsed}`
+          });
+        }
       }
-      
-      materialsToUpdate.push({
-        _id: materialId,
-        quantity: material.quantity - totalRequired
-      });
     }
     
-    // Create new production
-    const newProduction = new ProductionModel({
-      productId,
-      companyId,
-      quantity,
-      date,
-      status: status || "Pending"
-    });
-    
-    const savedProduction = await newProduction.save();
+    // Create the production record
+    const production = await Production.create(req.body);
     
     // Update raw material quantities
-    for (const material of materialsToUpdate) {
-      await RawMaterialModel.findByIdAndUpdate(
-        material._id,
-        { quantity: material.quantity }
-      );
+    if (req.body.materials && req.body.materials.length > 0) {
+      for (const material of req.body.materials) {
+        await RawMaterial.findByIdAndUpdate(
+          material.materialId,
+          { $inc: { quantity: -material.quantityUsed } }
+        );
+      }
     }
     
-    res.status(201).json(savedProduction);
+    res.status(201).json({
+      success: true,
+      message: "Production Successfully Added",
+      data: production,
+    });
   } catch (error) {
     console.error("Error adding production:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to add production",
-      error: error.message
-    });
+    return res.status(400).json({ success: false, error: error.message });
   }
 };
 
 // Get all productions
 const getProductions = async (req, res) => {
   try {
+    // Check if companyId is available
+    if (!req.companyId) {
+      console.error('Company ID not found in request');
+      return res.status(400).json({ 
+        success: false, 
+        error: "Company ID is required but not available" 
+      });
+    }
+    
+    console.log('Fetching productions for company:', req.companyId);
+    
     // Filter by company ID
-    const productions = await ProductionModel.find({ companyId: req.companyId });
-    res.status(200).json(productions);
+    const productions = await Production.find({ companyId: req.companyId });
+    
+    console.log(`Found ${productions.length} productions`);
+    
+    res.status(200).json({ success: true, data: productions });
   } catch (error) {
     console.error("Error fetching productions:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch productions",
-      error: error.message
-    });
+    return res.status(400).json({ success: false, error: error.message });
   }
 };
 
-// Update production status
-const updateStatus = async (req, res) => {
+// Get production by ID
+const getProductionById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
+    const id = req.params.id;
     
-    // Check if production exists and belongs to user's company
-    const production = await ProductionModel.findOne({ 
+    // Ensure the production belongs to the user's company
+    const production = await Production.findOne({ 
       _id: id, 
       companyId: req.companyId 
     });
@@ -112,26 +116,87 @@ const updateStatus = async (req, res) => {
       });
     }
     
-    // Update production status
-    const updatedProduction = await ProductionModel.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
-    
-    res.status(200).json(updatedProduction);
+    res.status(200).json({ success: true, data: production });
   } catch (error) {
-    console.error("Error updating production status:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to update production status",
-      error: error.message
+    console.error("Error fetching production:", error);
+    return res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+// Update production
+const updateProduction = async (req, res) => {
+  try {
+    const id = req.params.id;
+    
+    // Ensure the production belongs to the user's company
+    const production = await Production.findOne({ 
+      _id: id, 
+      companyId: req.companyId 
     });
+    
+    if (!production) {
+      return res.status(404).json({
+        success: false,
+        message: "Production not found or not authorized"
+      });
+    }
+    
+    // Don't allow changing the company ID
+    if (req.body.companyId) {
+      delete req.body.companyId;
+    }
+    
+    // Update the production
+    const updatedProduction = await Production.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
+    
+    res.status(200).json({
+      success: true,
+      message: "Production Successfully Updated",
+      data: updatedProduction,
+    });
+  } catch (error) {
+    console.error("Error updating production:", error);
+    return res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+// Delete production
+const deleteProduction = async (req, res) => {
+  try {
+    const id = req.params.id;
+    
+    // Ensure the production belongs to the user's company
+    const production = await Production.findOne({ 
+      _id: id, 
+      companyId: req.companyId 
+    });
+    
+    if (!production) {
+      return res.status(404).json({
+        success: false,
+        message: "Production not found or not authorized"
+      });
+    }
+    
+    // Delete the production
+    await Production.findByIdAndDelete(id);
+    
+    res.status(200).json({
+      success: true,
+      message: "Production Successfully Deleted"
+    });
+  } catch (error) {
+    console.error("Error deleting production:", error);
+    return res.status(400).json({ success: false, error: error.message });
   }
 };
 
 module.exports = {
   addProduction,
   getProductions,
-  updateStatus
+  getProductionById,
+  updateProduction,
+  deleteProduction
 };

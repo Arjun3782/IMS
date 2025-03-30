@@ -1,16 +1,22 @@
 const express = require('express');
-const { addProduction, getProductions, updateStatus } = require('../Controllers/productionController');
-const ensureAuthenticated = require('../Middlewares/AuthMiddlewares/Auth');
-const companyFilter = require('../Middlewares/companyFilter');
-
 const router = express.Router();
+const {
+  addProduction,
+  getProductions,
+  getProductionById,
+  updateProduction,
+  deleteProduction
+} = require('../Controllers/productionController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
-// Apply authentication and company filter middleware to all routes
-router.use(ensureAuthenticated);
-router.use(companyFilter);
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
+// Production routes
 router.post('/addProduction', addProduction);
 router.get('/getProductions', getProductions);
-router.put('/updateStatus/:id', updateStatus);
+router.get('/getProduction/:id', getProductionById);
+router.put('/updateProduction/:id', updateProduction);
+router.delete('/deleteProduction/:id', deleteProduction);
 
 module.exports = router;

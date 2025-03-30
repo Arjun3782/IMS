@@ -1,38 +1,86 @@
-const { Schema, model } = require("mongoose");
+const mongoose = require('mongoose');
 
-// Production schema
-const productionSchema = new Schema({
-  // Add company field
-  companyId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Company',
-    required: true
-  },
-  productId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true
-  },
-  quantity: {
-    type: Number,
+const productionSchema = new mongoose.Schema({
+  productionId: {
+    type: String,
     required: true,
-    min: 1
   },
-  date: {
+  productionName: {
+    type: String,
+    required: true,
+  },
+  startDate: {
     type: Date,
     required: true,
-    default: Date.now
+  },
+  endDate: {
+    type: Date,
+    required: false, // Changed from required: true to required: false
   },
   status: {
     type: String,
-    enum: ['Pending', 'Ready'],
-    default: 'Pending'
+    enum: ['Planned', 'In Progress', 'Completed', 'Cancelled'],
+    default: 'Planned',
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  materials: [{
+    materialId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'RawMaterial',
+      required: true,
+    },
+    p_id: {
+      type: String,
+      required: true,
+    },
+    p_name: {
+      type: String,
+      required: true,
+    },
+    quantityUsed: {
+      type: Number,
+      required: true,
+    },
+  }],
+  outputProduct: {
+    productId: {
+      type: String,
+      required: true,
+    },
+    productName: {
+      type: String,
+      required: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+    },
+    unitCost: {
+      type: Number,
+      required: true,
+    },
+    totalCost: {
+      type: Number,
+      required: true,
+    },
+  },
+  notes: {
+    type: String,
+  },
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+    required: true,
+  },
+}, {
+  timestamps: true
 });
 
-const ProductionModel = model("Production", productionSchema);
-module.exports = ProductionModel;
+// Create a compound index for uniqueness
+productionSchema.index(
+  { companyId: 1, productionId: 1 },
+  { unique: true }
+);
+
+const Production = mongoose.model('Production', productionSchema);
+
+module.exports = Production;
