@@ -9,6 +9,8 @@ const {authDbConn} = require('./config/authdb');
 const PORT = process.env.PORT || 5000;
 const rawMaterialRoute = require('./routes/rawMaterialRoute');
 const authRoutes = require('./routes/AuthRoutes/AuthRouter');
+const productRoute = require('./routes/productRoute');
+const productionRoute = require('./routes/productionRoute');
 
 // Connect to databases
 authDbConn();
@@ -16,7 +18,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:5173'],  // Allow both origins
   credentials: true // This allows cookies to be sent with requests
 }));
 app.use(express.json());
@@ -25,6 +27,8 @@ app.use(cookieParser()); // Add cookie parser for handling refresh tokens
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/rawMaterial', rawMaterialRoute);
+app.use('/api/product', productRoute);
+app.use('/api/production', productionRoute);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
