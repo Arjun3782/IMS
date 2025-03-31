@@ -137,9 +137,76 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// Add completed production to products
+const addCompletedProduction = async (req, res) => {
+  try {
+    const { production } = req.body;
+    
+    // Make sure we have the company ID from the middleware
+    const companyId = req.companyId;
+    
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required"
+      });
+    }
+    
+    if (!production) {
+      return res.status(400).json({
+        success: false,
+        message: "Production data is required"
+      });
+    }
+    
+    // Check if product with same ID already exists in this company
+    const existingProduct = await ProductModel.findOne({ 
+      productId: production.outputProduct.productId, 
+      companyId 
+    });
+    
+    if (existingProduct) {
+      // Update existing product with new production data
+      return res.status(200).json({
+        success: true,
+        message: "Production data added to existing product",
+        product: existingProduct
+      });
+    }
+    
+    // Create new product from production data
+    const newProduct = new ProductModel({
+      productId: production.outputProduct.productId,
+      productName: production.outputProduct.productName,
+      companyId,
+      // Map raw materials used in production to the product
+      rawMaterialUsage: production.materials.reduce((acc, material) => {
+        acc[material.p_id] = material.quantityUsed;
+        return acc;
+      }, {})
+    });
+    
+    const savedProduct = await newProduct.save();
+    
+    res.status(201).json({
+      success: true,
+      message: "Production data added as new product",
+      product: savedProduct
+    });
+  } catch (error) {
+    console.error("Error adding completed production:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to add completed production data",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   addProduct,
   getProducts,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  addCompletedProduction
 };

@@ -11,6 +11,7 @@ const rawMaterialRoute = require('./routes/rawMaterialRoute');
 const authRoutes = require('./routes/AuthRoutes/AuthRouter');
 const productRoute = require('./routes/productRoute');
 const productionRoute = require('./routes/productionRoute');
+const stockOrderRoutes = require('./routes/stockOrderRoutes');
 // Remove this line since we'll include it in authRoutes
 // const refreshTokenRoute = require('./routes/auth/refreshToken');
 const companyRoute = require('./routes/companyRoute');
@@ -36,7 +37,7 @@ app.use('/api/company', companyRoute);
 
 // Remove this line since we're already using authRoutes for /api/auth
 // app.use('/api/auth', refreshTokenRoute);
-
+app.use('/api/stockorder', stockOrderRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
