@@ -26,8 +26,18 @@ exports.getStockOrders = async (req, res) => {
 // Add a new stock order
 exports.addStockOrder = async (req, res) => {
   try {
+    // Add token validation check
+    if (!req.decoded || !req.decoded.companyId) {
+      console.error('Token validation failed: Missing decoded token or companyId');
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication failed. Invalid or expired token.'
+      });
+    }
+    
     // Update to access companyId from decoded token
     const companyId = req.decoded.companyId;
+    console.log(`Processing stock order for company ID: ${companyId}`);
     
     // Check if order number already exists for this company
     const existingOrder = await StockOrderModel.findOne({ 

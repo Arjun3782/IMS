@@ -1,6 +1,14 @@
-// Check if the route is properly defined with authentication middleware
+// Update the routes file to include the new endpoints
 const express = require('express');
-const { addProduct, getProducts, updateProduct, deleteProduct, addCompletedProduction } = require('../Controllers/productController');
+const { 
+  addProduct, 
+  getProducts, 
+  updateProduct, 
+  deleteProduct, 
+  addCompletedProduction,
+  getStock,
+  addToStock
+} = require('../Controllers/productController');
 const ensureAuthenticated = require('../Middlewares/AuthMiddlewares/Auth');
 const companyFilter = require('../Middlewares/companyFilter');
 
@@ -15,5 +23,7 @@ router.get('/getProducts', getProducts);
 router.put('/updateProduct/:id', updateProduct);
 router.delete('/deleteProduct/:id', deleteProduct);
 router.post('/addCompletedProduction', addCompletedProduction);
+router.get('/getStock', getStock);
+router.post('/addToStock', addToStock);
 
 module.exports = router;

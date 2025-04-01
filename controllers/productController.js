@@ -1,4 +1,5 @@
 const ProductModel = require("../Model/productModel");
+const StockModel = require("../Model/stockModel");
 
 // Add a new product
 const addProduct = async (req, res) => {
@@ -142,71 +143,125 @@ const addCompletedProduction = async (req, res) => {
   try {
     const { production } = req.body;
     
-    // Make sure we have the company ID from the middleware
+    if (!production || !production.outputProduct) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid production data"
+      });
+    }
+    
+    // Add company ID from middleware
     const companyId = req.companyId;
     
-    if (!companyId) {
-      return res.status(400).json({
-        success: false,
-        message: "Company ID is required"
-      });
-    }
-    
-    if (!production) {
-      return res.status(400).json({
-        success: false,
-        message: "Production data is required"
-      });
-    }
-    
-    // Check if product with same ID already exists in this company
-    const existingProduct = await ProductModel.findOne({ 
-      productId: production.outputProduct.productId, 
+    // First, check if the product exists
+    let product = await ProductModel.findOne({ 
+      productId: production.outputProduct.productId,
       companyId 
     });
     
-    if (existingProduct) {
-      // Update existing product with new production data
-      return res.status(200).json({
-        success: true,
-        message: "Production data added to existing product",
-        product: existingProduct
+    // If product doesn't exist, create it
+    if (!product) {
+      product = new ProductModel({
+        productId: production.outputProduct.productId,
+        productName: production.outputProduct.productName,
+        companyId,
+        rawMaterialUsage: {}
       });
+      
+      // Add raw material usage data if available
+      if (production.materials && production.materials.length > 0) {
+        production.materials.forEach(material => {
+          product.rawMaterialUsage.set(material.p_id, material.quantityUsed);
+        });
+      }
+      
+      await product.save();
     }
     
-    // Create new product from production data
-    const newProduct = new ProductModel({
+    // Now add to stock
+    const stockEntry = new StockModel({
       productId: production.outputProduct.productId,
       productName: production.outputProduct.productName,
-      companyId,
-      // Map raw materials used in production to the product
-      rawMaterialUsage: production.materials.reduce((acc, material) => {
-        acc[material.p_id] = material.quantityUsed;
-        return acc;
-      }, {})
+      quantity: production.outputProduct.quantity,
+      unitCost: production.outputProduct.unitCost,
+      totalCost: production.outputProduct.totalCost,
+      productionId: production._id,
+      date: new Date(),
+      source: 'production',
+      notes: `Produced from production ${production.productionName}`,
+      companyId
     });
     
-    const savedProduct = await newProduct.save();
+    const savedStock = await stockEntry.save();
     
     res.status(201).json({
       success: true,
-      message: "Production data added as new product",
-      product: savedProduct
+      message: "Production added to stock successfully",
+      data: savedStock
     });
   } catch (error) {
-    console.error("Error adding completed production:", error);
+    console.error("Error adding production to stock:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to add completed production data",
+      message: "Failed to add production to stock",
       error: error.message
     });
   }
 };
 
+// Add this function to get stock
+const getStock = async (req, res) => {
+  try {
+    // Filter by company ID
+    const stock = await StockModel.find({ companyId: req.companyId });
+    res.status(200).json({
+      success: true,
+      data: stock
+    });
+  } catch (error) {
+    console.error("Error fetching stock:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch stock",
+      error: error.message
+    });
+  }
+};
+
+// Add this function to add directly to stock
+const addToStock = async (req, res) => {
+  try {
+    const stockData = req.body;
+    
+    // Add company ID from middleware
+    stockData.companyId = req.companyId;
+    
+    // Create new stock entry
+    const stockEntry = new StockModel(stockData);
+    const savedStock = await stockEntry.save();
+    
+    res.status(201).json({
+      success: true,
+      message: "Item added to stock successfully",
+      data: savedStock
+    });
+  } catch (error) {
+    console.error("Error adding to stock:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to add to stock",
+      error: error.message
+    });
+  }
+};
+
+// Make sure to export the new functions
 module.exports = {
   addProduct,
   getProducts,
   updateProduct,
   deleteProduct,
-  addCompletedProduction
+  addCompletedProduction,
+  getStock,
+  addToStock
 };
