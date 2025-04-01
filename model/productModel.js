@@ -1,7 +1,6 @@
-const { Schema, model } = require("mongoose");
+const mongoose = require('mongoose');
 
-// Product schema
-const productSchema = new Schema({
+const ProductSchema = new mongoose.Schema({
   productId: {
     type: String,
     required: true
@@ -10,25 +9,40 @@ const productSchema = new Schema({
     type: String,
     required: true
   },
-  // Add company field to associate products with companies
-  companyId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Company',  // Assuming you'll create a Company model
+  quantity: {
+    type: Number,
     required: true
   },
-  rawMaterialUsage: {
-    type: Map,
-    of: Number,
-    default: {}
+  unitCost: {
+    type: Number,
+    default: 0
   },
-  createdAt: {
+  totalCost: {
+    type: Number,
+    default: 0
+  },
+  productionId: {
+    type: String
+  },
+  date: {
     type: Date,
     default: Date.now
+  },
+  source: {
+    type: String,
+    enum: ['production', 'manual', 'import'],
+    default: 'manual'
+  },
+  notes: {
+    type: String
+  },
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+    required: true
   }
+}, {
+  timestamps: true
 });
 
-// Create a compound index for productId and companyId to ensure uniqueness within a company
-productSchema.index({ productId: 1, companyId: 1 }, { unique: true });
-
-const ProductModel = model("Product", productSchema);
-module.exports = ProductModel;
+module.exports = mongoose.model('Product', ProductSchema);
