@@ -26,20 +26,30 @@ const addProduction = async (req, res) => {
     // Check if materials exist and have sufficient quantity
     if (req.body.materials && req.body.materials.length > 0) {
       for (const material of req.body.materials) {
+        // Check if materialId exists, if not use p_id
+        const materialIdToUse = material.materialId || material.p_id;
+        
+        if (!materialIdToUse) {
+          return res.status(400).json({
+            success: false,
+            error: `Material ID is missing for one of the materials`
+          });
+        }
+        
         const rawMaterial = await RawMaterial.findOne({
-          _id: material.materialId,
+          _id: materialIdToUse,
           companyId: req.body.companyId
         });
         
         if (!rawMaterial) {
           return res.status(404).json({
             success: false,
-            error: `Raw material with ID ${material.materialId} not found`
+            error: `Raw material with ID ${materialIdToUse} not found`
           });
         }
         
         // Check if there's enough quantity
-        if (rawMaterial.quantity < material.quantityUsed) {
+        if (Number(rawMaterial.quantity) < Number(material.quantityUsed)) {
           return res.status(400).json({
             success: false,
             error: `Insufficient quantity for ${rawMaterial.p_name}. Available: ${rawMaterial.quantity}, Required: ${material.quantityUsed}`
@@ -54,8 +64,9 @@ const addProduction = async (req, res) => {
     // Update raw material quantities
     if (req.body.materials && req.body.materials.length > 0) {
       for (const material of req.body.materials) {
+        const materialIdToUse = material.materialId || material.p_id;
         await RawMaterial.findByIdAndUpdate(
-          material.materialId,
+          materialIdToUse,
           { $inc: { quantity: -material.quantityUsed } }
         );
       }
