@@ -42,6 +42,17 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Add a health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    serverTime: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+// Add dashboard routes
+const dashboardRoutes = require('./routes/dashboardRoutes');
+app.use('/api/dashboard', dashboardRoutes);
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
