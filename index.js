@@ -13,6 +13,7 @@ const productRoute = require('./routes/productRoute');
 const productionRoute = require('./routes/productionRoute');
 const companyRoute = require('./routes/companyRoute');
 const salesOrderRoute = require('./routes/salesOrderRoute'); // Add this line
+const userRoutes = require('./routes/userRoutes');
 
 // Connect to databases
 authDbConn();
@@ -32,7 +33,8 @@ app.use('/api/rawMaterial', rawMaterialRoute);
 app.use('/api/product', productRoute);
 app.use('/api/production', productionRoute);
 app.use('/api/company', companyRoute);
-app.use('/api/salesOrder', salesOrderRoute); // Add this line
+app.use('/api/salesOrder', salesOrderRoute);
+app.use('/api/user', userRoutes); // Add this line for user management
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
