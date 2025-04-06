@@ -1,7 +1,11 @@
 const jwt = require('jsonwebtoken');
 const User = require('../Model/user');
 
-const authMiddleware = async (req, res, next) => {
+/**
+ * Unified authentication middleware
+ * Verifies JWT token and adds user information to request object
+ */
+const authenticate = async (req, res, next) => {
   try {
     // Get token from header
     const authHeader = req.headers.authorization;
@@ -24,9 +28,7 @@ const authMiddleware = async (req, res, next) => {
     }
     
     // Verify token
-    console.log('Verifying token:', token.substring(0, 20) + '...');
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret');
-    console.log('Token decoded successfully:', decoded);
     
     // Find user by id
     const user = await User.findById(decoded.id);
@@ -43,10 +45,20 @@ const authMiddleware = async (req, res, next) => {
     req.userId = user._id;
     req.companyId = user.companyId || decoded.companyId;
     
-    console.log('User authenticated:', user._id, 'Company ID:', req.companyId);
+    // Add decoded token info for backward compatibility
+    req.decoded = decoded;
+    
     next();
   } catch (error) {
     console.error('Auth middleware error:', error.message);
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired. Please login again.'
+      });
+    }
+    
     return res.status(401).json({ 
       success: false, 
       message: 'Unauthorized, JWT token is wrong or expired' 
@@ -54,4 +66,8 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = authMiddleware;
+// Export the middleware with multiple names for backward compatibility
+module.exports = authenticate;
+module.exports.authMiddleware = authenticate;
+module.exports.ensureAuthenticated = authenticate;
+module.exports.verifyToken = authenticate;

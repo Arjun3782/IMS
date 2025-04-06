@@ -9,7 +9,7 @@ const {
   getStock,
   addToStock
 } = require('../Controllers/productController');
-const ensureAuthenticated = require('../Middlewares/AuthMiddlewares/Auth');
+const { ensureAuthenticated } = require('../middlewares/auth');
 const companyFilter = require('../Middlewares/companyFilter');
 
 const router = express.Router();

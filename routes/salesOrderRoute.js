@@ -7,7 +7,7 @@ const {
   updateSalesOrder,
   deleteSalesOrder
 } = require('../Controllers/salesOrderController');
-const ensureAuthenticated = require('../Middlewares/AuthMiddlewares/Auth');
+const ensureAuthenticated = require('../Middlewares/auth');
 const companyFilter = require('../Middlewares/companyFilter');
 
 // Apply authentication and company filter middleware to all routes

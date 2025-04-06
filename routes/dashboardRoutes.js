@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const dashboardController = require('../Controllers/dashboardController');
-const ensureAuthenticated = require('../Middlewares/AuthMiddlewares/Auth');
+const { ensureAuthenticated } = require('../middlewares/auth');
 const companyFilter = require('../Middlewares/companyFilter');
 
 // Apply authentication and company filter middleware

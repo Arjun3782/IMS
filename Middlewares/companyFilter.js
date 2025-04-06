@@ -35,7 +35,7 @@ const companyFilter = async (req, res, next) => {
     
     // Add company ID to the request
     req.companyId = company._id;
-    console.log(`Set companyId for request: ${req.companyId}`);
+    // console.log(`Set companyId for request: ${req.companyId}`);
     
     // Continue to the next middleware or route handler
     next();

@@ -6,8 +6,7 @@ const {
   updateUser,
   deleteUser
 } = require('../Controllers/userController');
-const ensureAuthenticated = require('../Middlewares/AuthMiddlewares/Auth');
-const adminCheck = require('../Middlewares/adminCheck');
+const { ensureAuthenticated } = require('../middlewares/auth');
 
 // Apply authentication middleware to all routes
 router.use(ensureAuthenticated);

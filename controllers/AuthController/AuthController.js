@@ -75,7 +75,7 @@ const generateAccessToken = (user) => {
       email: user.email,
       role: user.role,
       company_name: user.company_name,
-      companyId: user.companyId.toString() // Ensure companyId is a string
+      companyId: user.companyId.toString() 
     },
     process.env.JWT_SECRET,
     { expiresIn: "15m" } // Shorter expiration for access tokens

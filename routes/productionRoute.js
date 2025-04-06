@@ -7,7 +7,7 @@ const {
   updateProduction,
   deleteProduction
 } = require('../Controllers/productionController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const { authMiddleware } = require('../middlewares/auth');
 
 // Apply auth middleware to all routes
 router.use(authMiddleware);

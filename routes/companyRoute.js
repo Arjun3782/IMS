@@ -6,7 +6,7 @@ const {
   updateCompany, 
   deleteCompany 
 } = require('../Controllers/companyController');
-const ensureAuthenticated = require('../Middlewares/AuthMiddlewares/Auth');
+const { ensureAuthenticated } = require('../middlewares/auth');
 
 const router = express.Router();
 
