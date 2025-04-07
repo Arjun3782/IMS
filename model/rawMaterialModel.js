@@ -49,14 +49,7 @@ const rawMaterialSchema = new mongoose.Schema({
   },
 });
 
-// Drop existing problematic indexes
-// This will remove the p_id_1 index
-rawMaterialSchema.index({ p_id: 1 }, { unique: false });
-
-// This will remove the p_id_1_companyId_1 index
-rawMaterialSchema.index({ p_id: 1, companyId: 1 }, { unique: false });
-
-// Create a new compound index that includes all the fields we need for uniqueness
+// Create a compound index that ensures uniqueness across company, product, supplier and date
 rawMaterialSchema.index(
   { companyId: 1, p_id: 1, s_id: 1, date: 1 },
   { unique: true }

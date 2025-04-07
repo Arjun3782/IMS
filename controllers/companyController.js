@@ -1,5 +1,4 @@
 const CompanyModel = require("../Model/companyModel");
-const UserModel = require("../Model/user");
 
 // Create a new company
 const createCompany = async (req, res) => {
