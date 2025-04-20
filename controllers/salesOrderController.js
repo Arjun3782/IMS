@@ -159,7 +159,7 @@ const deleteSalesOrder = async (req, res) => {
     }
     
     // Return the quantity to stock
-    await updateStockQuantity(salesOrder.productId, salesOrder.quantity, req.companyId);
+    await updateStockQuantity(salesOrder.productId, -salesOrder.quantity, req.companyId);
     
     // Delete the sales order
     await SalesOrderModel.findByIdAndDelete(req.params.id);

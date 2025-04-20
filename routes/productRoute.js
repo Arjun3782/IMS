@@ -24,7 +24,7 @@ router.put('/updateProduct/:id', updateProduct);
 router.delete('/deleteProduct/:id', deleteProduct);
 router.post('/addCompletedProduction', addCompletedProduction);
 router.get('/getStockItems', getStock);
-router.get('/getProductions', getStock); // Added this route to match the client request
+router.get('/getProductions', getStock); 
 router.post('/addToStock', addToStock);
 
 module.exports = router;
